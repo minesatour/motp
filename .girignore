@@ -1,0 +1,32 @@
+# Config with creds
+config.json
+
+# Logs
+/var/log/otp_spoofer.log
+
+# Temp voice files
+/tmp/voice_*.wav
+
+# Python bytecode and build artifacts
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+*.egg-info/
+dist/
+build/
+
+# Virtual environments
+env/
+venv/
+
+# Git and local stuff
+.git/
+.gitignore
+
+# Systemd service file
+otp_spoofer.service
+
+# Ngrok downloads
+ngrok-v3-stable-linux-amd64.tgz
