@@ -1,0 +1,6 @@
+flask==2.3.3
+twilio==8.10.0
+python-telegram-bot==20.6
+phonenumbers==8.13.23
+requests==2.31.0
+asyncio==3.4.3
